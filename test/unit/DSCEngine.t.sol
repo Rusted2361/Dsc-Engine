@@ -12,12 +12,13 @@ contract DSCEngineTest is Test {
     DSCEngine dsce;
     HelperConfig config;
     address weth;
-    address ethUsdPriceFeed;
+    address public ethUsdPriceFeed;
+    address public btcUsdPriceFeed;
 
     function setUp() public {
         deployer = new DeployDSC();
         (dsc, dsce, config) = deployer.run();
-        (ethUsdPriceFeed,, weth,,) = config.activeNetworkConfig();
+        (ethUsdPriceFeed, btcUsdPriceFeed, weth,,) = config.activeNetworkConfig();
     }
 
     /////////////////
@@ -29,5 +30,20 @@ contract DSCEngineTest is Test {
         uint256 expectedUsd = 30000e18;
         uint256 actualUsd = dsce.getUsdValue(weth, ethAmount);
         assertEq(expectedUsd, actualUsd);
+    }
+
+    ///////////////////////
+    // Constructor Tests //
+    ///////////////////////
+    address[] public tokenAddresses;
+    address[] public feedAddresses;
+
+    function testRevertsIfTokenLengthDoesntMatchPriceFeeds() public {
+        tokenAddresses.push(weth);
+        feedAddresses.push(ethUsdPriceFeed);
+        feedAddresses.push(btcUsdPriceFeed);
+
+        vm.expectRevert(DSCEngine.DSCEngine__TokenAddressesAndPriceFeedAddressesMustBeSameLength.selector);
+        new DSCEngine(tokenAddresses, feedAddresses, address(dsc));
     }
 }
